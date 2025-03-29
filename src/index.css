@@ -1,0 +1,56 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Add base styles if needed */
+body {
+  font-family: sans-serif;
+  margin: 0;
+  background-color: #f8f9fa; /* Light background */
+}
+
+/* Style React Flow elements (optional customization) */
+.react-flow__node {
+  /* Example: Add default border */
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  background-color: white;
+  padding: 5px 10px; /* Adjust padding */
+  min-width: 150px; /* Ensure nodes have some width */
+  font-size: 0.8rem; /* Smaller font size */
+}
+
+/* .react-flow__node-env {
+  Custom styles for our environment nodes
+  Example: Specific background or border
+} */
+
+.react-flow__edge-path {
+  stroke: #555;
+  stroke-width: 1.5;
+}
+
+.react-flow__handle {
+  opacity: 0; /* Hide default handles unless needed */
+}
+
+/* src/index.css or equivalent */
+.current-line-highlight {
+  background-color: rgba(
+    255,
+    230,
+    150,
+    0.4
+  ); /* Example: Light yellow, semi-transparent */
+  /* You could also add a border or other styles */
+  /* border-left: 3px solid orange; */
+  /* Ensure it overlays correctly if needed */
+  z-index: 0; /* Default content z-index is 0 */
+  box-sizing: border-box; /* Include border in width if you add one */
+}
+
+/* Optional: If you want a gutter glyph instead of/in addition to background */
+/* .myGlyphMarginClass { */
+/* background: url('path/to/your/arrow-icon.png') center center no-repeat; */
+/* width: 10px !important; */
+/* } */
