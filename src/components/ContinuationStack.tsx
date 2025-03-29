@@ -1,40 +1,51 @@
 import React from 'react';
-import type { ContextData } from '../types/state';
+import type { ContextData } from '@/types/state';
+import { ScrollArea } from "@/components/ui/scroll-area"; // Use Shadcn ScrollArea
 
-interface ContinuationStackProps {
+interface ContinuationProps {
     continuation: ContextData[];
 }
 
-const ContinuationStack: React.FC<ContinuationStackProps> = ({ continuation }) => {
-    console.log(continuation);
-    const stack = continuation || []; // Handle potential undefined stack
+const Continuation: React.FC<ContinuationProps> = ({ continuation }) => {
+    const stack = continuation || [];
 
     return (
-        <div className="border border-gray-300 rounded bg-white p-3 shadow-sm h-full flex flex-col">
-            <h2 className="text-lg font-semibold mb-2 text-gray-700 border-b pb-1">Continuation (k)</h2>
+        // Use theme variables for background and border
+        <div className="border border-border rounded-md bg-card p-3 h-full flex flex-col text-foreground">
+            {/* Use theme colors, subtle bottom border */}
+            <h2 className="text-sm font-medium mb-2 border-b border-border/50 pb-1.5 text-muted-foreground">
+                Stack
+            </h2>
             {stack.length === 0 ? (
-                <div className="text-gray-500 italic flex-grow flex items-center justify-center">Stack Empty (Final State)</div>
+                <div className="text-muted-foreground italic flex-grow flex items-center justify-center text-sm">
+                    Stack Empty (Final State)
+                </div>
             ) : (
-                // Render stack from top (end of array) to bottom (start of array)
-                <ul className="space-y-1 overflow-y-auto flex-grow flex flex-col-reverse">
-                    {stack.map((context, index) => (
-                        <li
-                            key={index} // Using index is okay here as stack order matters and items don't change identity
-                            className={
-                                "border rounded px-2 py-1 text-sm font-mono " +
-                                (index === stack.length - 1
-                                    ? "bg-blue-100 border-blue-400 shadow"
-                                    : "bg-gray-50 border-gray-200")
-                            }
-                        >
-                            <span className="font-semibold">L{context.lineno}:</span> Env {context.env_id}
-                            {index === stack.length - 1 && <span className="text-blue-700 font-bold ml-2">(Top)</span>}
-                        </li>
-                    ))}
-                </ul>
+                // Use Shadcn ScrollArea for consistent scrollbars
+                <ScrollArea className="flex-grow pr-3"> {/* Add padding-right to ScrollArea content if needed */}
+                    {/* Render stack from top (end) to bottom (start) */}
+                    <ul className="space-y-1.5 flex flex-col-reverse">
+                        {stack.map((context, index) => (
+                            <li
+                                key={index}
+                                // Use theme colors, subtle highlight for top item
+                                className={`border rounded px-2 py-1 text-xs font-mono ${index === stack.length - 1
+                                    ? 'bg-primary/10 border-primary/40' // Subtle primary highlight
+                                    : 'bg-background border-border/70'   // Slightly different background or border
+                                    }`}
+                            >
+                                <span className="font-semibold text-muted-foreground">L{context.lineno}:</span> Env {context.env_id}
+                                {index === stack.length - 1 && (
+                                    // Use primary text color for top indicator
+                                    <span className="text-primary font-bold ml-2">(Top)</span>
+                                )}
+                            </li>
+                        ))}
+                    </ul>
+                </ScrollArea>
             )}
         </div>
     );
 };
 
-export default ContinuationStack;
+export default Continuation;

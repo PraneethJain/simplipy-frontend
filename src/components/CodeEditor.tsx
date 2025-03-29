@@ -1,15 +1,16 @@
 import React, { useRef, useEffect } from 'react';
 import Editor, { Monaco, OnMount } from "@monaco-editor/react";
-import * as monacoEditor from 'monaco-editor/esm/vs/editor/editor.api'; // Import type for editor instance
+import * as monacoEditor from 'monaco-editor/esm/vs/editor/editor.api';
 
 interface CodeEditorProps {
     code: string;
     onChange: (value: string | undefined) => void;
     language?: string;
     readOnly?: boolean;
-    currentLine?: number; // Optional: To highlight the current line
+    currentLine?: number;
 }
 
+// Class name defined in global CSS (e.g., index.css)
 const CURRENT_LINE_DECORATION_CLASS = 'current-line-highlight';
 
 const CodeEditor: React.FC<CodeEditorProps> = ({
@@ -19,86 +20,86 @@ const CodeEditor: React.FC<CodeEditorProps> = ({
     readOnly = false,
     currentLine
 }) => {
-    // Refs to store editor instance, monaco instance, and decoration IDs
     const editorRef = useRef<monacoEditor.editor.IStandaloneCodeEditor | null>(null);
     const monacoRef = useRef<Monaco | null>(null);
-    const decorationsRef = useRef<string[]>([]); // Store decoration IDs to remove them later
+    const decorationsRef = useRef<string[]>([]);
 
-    // Effect to apply/update decorations when currentLine changes or editor mounts
     useEffect(() => {
-        // Ensure editor and monaco are mounted
         if (!editorRef.current || !monacoRef.current) {
             return;
         }
-
         const editor = editorRef.current;
         const monaco = monacoRef.current;
         let newDecorations: monacoEditor.editor.IModelDeltaDecoration[] = [];
 
-        // If we have a valid current line number, create the decoration
         if (typeof currentLine === 'number' && currentLine > 0) {
-            newDecorations = [
-                {
-                    range: new monaco.Range(currentLine, 1, currentLine, 1), // Range for the whole line
-                    options: {
-                        isWholeLine: true, // Apply to the entire line
-                        // Class name for styling (defined in CSS)
-                        className: CURRENT_LINE_DECORATION_CLASS,
-                        // Optional: specify where the decoration should be (e.g., behind text)
-                        // Use GlyphMargin if you want an icon in the gutter
-                        // linesDecorationsClassName: 'myGlyphMarginClass',
+            // Validate line number against model
+            const model = editor.getModel();
+            if (model && currentLine <= model.getLineCount()) {
+                newDecorations = [
+                    {
+                        range: new monaco.Range(currentLine, 1, currentLine, model.getLineMaxColumn(currentLine)), // Ensure range covers content
+                        options: {
+                            isWholeLine: true,
+                            className: CURRENT_LINE_DECORATION_CLASS,
+                            // Stickiness ensures decoration stays with the line number if edits happen above/below
+                            stickiness: monacoEditor.editor.TrackedRangeStickiness.NeverGrowsWhenTypingAtEdges,
+                        }
                     }
-                }
-            ];
+                ];
+            } else {
+                console.warn(`Invalid currentLine number: ${currentLine}`);
+            }
         }
 
-        // Use deltaDecorations to atomically remove old decorations and add new ones
-        // It returns the new decoration IDs
+        // Update decorations
         decorationsRef.current = editor.deltaDecorations(
-            decorationsRef.current, // Old decorations IDs to remove
-            newDecorations         // New decorations to add
+            decorationsRef.current,
+            newDecorations
         );
 
-        // Optionally reveal the line if it's off-screen
-        if (typeof currentLine === 'number' && currentLine > 0) {
-            // Smooth scroll is generally preferred if available and desired
-            editor.revealLineInCenterIfOutsideViewport(currentLine, monacoEditor.editor.ScrollType.Smooth);
-            // Or just ensure it's visible:
-            // editor.revealLine(currentLine, monacoEditor.editor.ScrollType.Smooth);
+        // Reveal line only if it's valid
+        if (typeof currentLine === 'number' && currentLine > 0 && newDecorations.length > 0) {
+            // Use a slight delay for reveal to ensure rendering completes
+            setTimeout(() => {
+                editor.revealLineInCenterIfOutsideViewport(currentLine, monacoEditor.editor.ScrollType.Smooth);
+            }, 50); // 50ms delay, adjust if needed
         }
 
-        // No explicit cleanup function needed here, as deltaDecorations handles removal
-    }, [currentLine]); // Rerun this effect only when currentLine changes
+    }, [currentLine]); // Rerun effect when currentLine changes
 
-    // Store editor and monaco instances on mount
     const handleEditorDidMount: OnMount = (editor, monaco) => {
         editorRef.current = editor;
         monacoRef.current = monaco;
-
-        // Trigger the effect manually once on mount in case currentLine is already set
-        // The useEffect will run immediately after mount anyway, so this might be redundant
-        // but ensures initial highlight if prop is passed before first render completes fully.
-        // However, directly manipulating decorationsRef here might race with useEffect.
-        // It's safer to rely on the useEffect triggered by the initial currentLine prop value.
+        // Initial highlight application is handled by the useEffect
     };
 
     return (
-        // Remove the simple lineHighlightClass from the container
-        <div className="border border-gray-300 rounded shadow-sm h-full">
+        // Use border-border from theme, remove shadow
+        <div className="border border-border rounded-md h-full overflow-hidden">
             <Editor
-                height="100%"
+                height="100%" // Ensure editor fills the container
                 language={language}
+                theme="vs-dark" // Explicitly set dark theme for Monaco
                 value={code}
                 onChange={onChange}
                 onMount={handleEditorDidMount}
                 options={{
                     readOnly: readOnly,
-                    minimap: { enabled: true },
+                    minimap: { enabled: false }, // Minimalistic: disable minimap
                     fontSize: 13,
                     scrollBeyondLastLine: false,
-                    automaticLayout: true, // Adjust layout on container resize
-                    // Consider adding 'renderLineHighlight': 'none' if you don't want Monaco's default line highlight
+                    automaticLayout: true,
+                    lineNumbersMinChars: 3, // Reduce space for line numbers
+                    renderLineHighlight: "none", // Disable default Monaco highlight, use ours
+                    scrollbar: { // Optional: Style scrollbars
+                        verticalScrollbarSize: 8,
+                        horizontalScrollbarSize: 8,
+                    },
+                    padding: { top: 8, bottom: 8 } // Add some internal padding
                 }}
+            // Pass className to potentially style wrapper if needed
+            // className="h-full w-full"
             />
         </div>
     );
