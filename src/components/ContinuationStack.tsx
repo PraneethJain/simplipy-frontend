@@ -1,6 +1,5 @@
 import React from 'react';
 import type { ContextData } from '@/types/state';
-import { ScrollArea } from "@/components/ui/scroll-area"; // Use Shadcn ScrollArea
 
 interface ContinuationProps {
     continuation: ContextData[];
@@ -21,8 +20,7 @@ const Continuation: React.FC<ContinuationProps> = ({ continuation }) => {
                     Stack Empty (Final State)
                 </div>
             ) : (
-                // Use Shadcn ScrollArea for consistent scrollbars
-                <ScrollArea className="flex-grow pr-3"> {/* Add padding-right to ScrollArea content if needed */}
+                <div className="flex-grow pr-3 overflow-y-auto">
                     {/* Render stack from top (end) to bottom (start) */}
                     <ul className="space-y-1.5 flex flex-col-reverse">
                         {stack.map((context, index) => (
@@ -31,7 +29,7 @@ const Continuation: React.FC<ContinuationProps> = ({ continuation }) => {
                                 // Use theme colors, subtle highlight for top item
                                 className={`border rounded px-2 py-1 text-xs font-mono ${index === stack.length - 1
                                     ? 'bg-primary/10 border-primary/40' // Subtle primary highlight
-                                    : 'bg-background border-border/70'   // Slightly different background or border
+                                    : 'bg-background border-border/70' // Slightly different background or border
                                     }`}
                             >
                                 <span className="font-semibold text-muted-foreground">L{context.lineno}:</span> Env {context.env_id}
@@ -42,7 +40,7 @@ const Continuation: React.FC<ContinuationProps> = ({ continuation }) => {
                             </li>
                         ))}
                     </ul>
-                </ScrollArea>
+                </div>
             )}
         </div>
     );
