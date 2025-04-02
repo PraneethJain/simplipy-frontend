@@ -31,3 +31,7 @@ export interface CtfTable {
   true: Record<string, number>;
   false: Record<string, number>;
 }
+
+export interface SimplifyResponseData {
+  simplified_code: string;
+}

@@ -3,7 +3,8 @@ import type {
   SessionResponseData,
   StepResponseData,
   ProgramState,
-} from "../types/state";
+} from "@/types/state";
+import type { SimplifyResponseData } from "@/types/program";
 
 export const createSession = async (
   code: string,
@@ -47,5 +48,14 @@ export const deleteSession = async (
   const response = await apiClient.delete<{ message: string }>(
     `/session/${sessionId}`
   );
+  return response.data;
+};
+
+export const simplifyCode = async (
+  code: string
+): Promise<SimplifyResponseData> => {
+  const response = await apiClient.post<SimplifyResponseData>("/simplify", {
+    code,
+  });
   return response.data;
 };

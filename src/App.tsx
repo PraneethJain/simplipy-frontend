@@ -14,20 +14,26 @@ import type { SerializedProgram, CtfTable } from '@/types/program';
 // Shadcn UI Components & Icons
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { X, Info, PanelLeftClose, PanelRightClose } from 'lucide-react'; // Icons for buttons
+import { X, Info, PanelLeftClose, PanelRightClose, Wand2 } from 'lucide-react'; // Icons for buttons
 
 // Default sample code
 const defaultCode = `
-x = 10
-y = 5
+def my_func(a):
+    return a * 2
 
-def add(a, b):
-  res = a + b
-  return res
+y = 10 + (5 * my_func(2))
 
-z = add(x, y)
+x = 1
+if x > 0:
+    y = 10
 
-w = x + 5
+while x < 3:
+    x = x + 1
+
+def simple_add(a, b):
+    c = a + b
+
+z = simple_add(5, 3)
 `;
 
 // Utility function to extract error messages
@@ -158,6 +164,25 @@ function App() {
     }
   }, [sessionId]);
 
+  const handleSimplify = useCallback(async () => {
+    if (isLoading || isSessionActive || !code) return; // Don't simplify if busy, active session, or no code
+    setError(null);
+    setIsLoading(true);
+    console.log("Attempting to simplify code...");
+    try {
+      const response = await debuggerApi.simplifyCode(code);
+      console.log("Simplification successful:", response);
+      setCode(response.simplified_code); // Update the editor content
+      // Optionally show a success message briefly?
+    } catch (err: unknown) {
+      console.error("Simplification failed:", err);
+      setError(getErrorMessage(err));
+    } finally {
+      setIsLoading(false);
+    }
+  }, [code, isLoading, isSessionActive]); // Dependencies: code, isLoading, isSessionActive
+
+
   // --- Effect for Session Cleanup on Unmount ---
   useEffect(() => {
     const sessionToClean = sessionId;
@@ -176,6 +201,7 @@ function App() {
   const canStart = !isLoading && !isSessionActive;
   const canViewInfo = isSessionActive && !isLoading && !!programStructure && !!ctfTable;
   const canShowCfg = isSessionActive && !!ctfTable; // Can toggle CFG if session active & CTF loaded
+  const canSimplify = !isLoading && !isSessionActive && !!code; // Can simplify only when inactive and code exists
 
   // --- Render ---
   return (
@@ -183,6 +209,10 @@ function App() {
     <div className="flex flex-col h-screen p-4 bg-background text-foreground gap-4">
       {/* --- Top Controls --- */}
       <div className="flex items-center gap-2 flex-wrap">
+        <Button onClick={handleSimplify} disabled={!canSimplify} variant="outline" size="sm" title="Attempt to simplify code for the interpreter">
+          <Wand2 className="h-4 w-4 mr-2" />
+          {isLoading && !isSessionActive ? 'Simplifying...' : 'Simplify'}
+        </Button>
         {/* Debug Buttons */}
         <Button onClick={handleCreateSession} disabled={!canStart || isLoading} variant="secondary" size="sm">
           {isLoading && !isSessionActive ? 'Starting...' : 'Start'}
