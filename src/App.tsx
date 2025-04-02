@@ -14,7 +14,7 @@ import type { SerializedProgram, CtfTable } from '@/types/program';
 // Shadcn UI Components & Icons
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { X, Info, PanelLeftClose, PanelRightClose, Wand2 } from 'lucide-react'; // Icons for buttons
+import { X, Info, PanelLeftClose, PanelRightClose, Wand2, Github } from 'lucide-react'; // Added Github icon
 
 // Default sample code
 const defaultCode = `
@@ -208,7 +208,8 @@ function App() {
     // No top-level ReactFlowProvider here
     <div className="flex flex-col h-screen p-4 bg-background text-foreground gap-4">
       {/* --- Top Controls --- */}
-      <div className="flex items-center gap-2 flex-wrap">
+      <div className="flex items-center gap-2 flex-wrap border-b pb-2 mb-2"> {/* Added border-b and margin */}
+        <h1 className="text-xl font-semibold mr-4">SimpliPy</h1> {/* Title */}
         <Button onClick={handleSimplify} disabled={!canSimplify} variant="outline" size="sm" title="Attempt to simplify code for the interpreter">
           <Wand2 className="h-4 w-4 mr-2" />
           {isLoading && !isSessionActive ? 'Simplifying...' : 'Simplify'}
@@ -326,6 +327,20 @@ function App() {
         )}
 
       </div> {/* End Main Content Area */}
+
+      {/* --- Footer --- */}
+      <footer className="text-center text-xs text-muted-foreground shrink-0">
+        Made with ❤️ by Praneeth Jain |{' '}
+        <a
+          href="https://www.github.com/PraneethJain"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-flex items-center hover:text-foreground transition-colors relative top-[2px]"
+        >
+          <Github className="h-3 w-3 mr-1" />
+          GitHub
+        </a>
+      </footer>
 
       {/* --- Program Info Modal (Rendered but hidden until opened) --- */}
       {programStructure && ctfTable && (
