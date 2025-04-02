@@ -1,5 +1,5 @@
 // src/components/ProgramInfoModal.tsx
-import React from 'react';
+import React, { useMemo } from 'react'; // Import useMemo
 import {
     Dialog,
     DialogContent,
@@ -24,7 +24,7 @@ interface ProgramInfoModalProps {
     isOpen: boolean;
     onClose: () => void;
     program: SerializedProgram; // Still needed for structure view
-    ctf: CtfTable; // Needed for CTF table and CFG view
+    ctf: CtfTable; // Needed for CTF table
 }
 
 type NodeType = SerializedProgram | SerializedBlock | SerializedStatement
@@ -36,6 +36,7 @@ const isBlock = (n: NodeType): n is SerializedBlock =>
     n.type === "Block";
 
 // --- ProgramStructureViewer (Helper for simplified structure) ---
+// (Keep the existing ProgramStructureViewer component as is)
 const ProgramStructureViewer: React.FC<{ node: NodeType }> = ({ node }) => {
     const renderNodeContent = (n: typeof node) => {
         const lineRange = (first: number, last: number) =>
@@ -49,7 +50,7 @@ const ProgramStructureViewer: React.FC<{ node: NodeType }> = ({ node }) => {
             return (
                 <div className="ml-4 pl-4 border-l border-border/50"> {/* Use border color */}
                     <p className="text-xs text-muted-foreground font-semibold">
-                        {lineRange(n.first_line, n.last_line)}: Block {n.lexical ? '[Scope]' : ''} {/* Shortened label */}
+                        {lineRange(n.first_line, n.last_line)}: Block {n.lexical ? '[Lexical]' : ''} {/* Shortened label */}
                     </p>
                     {n.lexical && (
                         <div className="text-xs mt-1 mb-2 space-y-0.5 pl-2"> {/* Indent scope info */}
@@ -100,35 +101,29 @@ const ProgramStructureViewer: React.FC<{ node: NodeType }> = ({ node }) => {
     return <div className="mb-1 font-mono text-xs">{renderNodeContent(node)}</div>;
 };
 
+
 // --- Main Modal Component ---
 const ProgramInfoModal: React.FC<ProgramInfoModalProps> = ({ isOpen, onClose, program, ctf }) => {
 
-    // Helper to render CTF tables
-    const renderCtfTable = (data: Record<string, number>, title: string) => (
-        <div className='mb-4'>
-            <h4 className="text-sm font-semibold mb-1 text-muted-foreground">{title}</h4>
-            {Object.keys(data).length === 0 ? <p className="text-xs text-muted-foreground italic">Empty</p> : (
-                <Table className="text-xs">
-                    <TableHeader>
-                        <TableRow>
-                            <TableHead className="w-[80px]">From Line</TableHead>
-                            <TableHead>To Line</TableHead>
-                        </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                        {Object.entries(data)
-                            .sort(([a,], [b,]) => parseInt(a) - parseInt(b))
-                            .map(([fromLine, toLine]) => (
-                                <TableRow key={`${title}-${fromLine}`}>
-                                    <TableCell className="font-mono py-1">{fromLine}</TableCell>
-                                    <TableCell className="font-mono py-1">{toLine}</TableCell>
-                                </TableRow>
-                            ))}
-                    </TableBody>
-                </Table>
-            )}
-        </div>
-    );
+    // Process CTF data for the consolidated table
+    const consolidatedCtfData = useMemo(() => {
+        const allSourceLines = new Set<number>();
+        Object.keys(ctf.next).forEach(line => allSourceLines.add(Number(line)));
+        Object.keys(ctf.true).forEach(line => allSourceLines.add(Number(line)));
+        Object.keys(ctf.false).forEach(line => allSourceLines.add(Number(line)));
+
+        const sortedLines = Array.from(allSourceLines).sort((a, b) => a - b);
+
+        return sortedLines.map(sourceLine => {
+            const sourceLineStr = sourceLine.toString();
+            return {
+                source: sourceLine,
+                next: ctf.next[sourceLineStr], // Will be undefined if not present
+                true: ctf.true[sourceLineStr], // Will be undefined if not present
+                false: ctf.false[sourceLineStr], // Will be undefined if not present
+            };
+        });
+    }, [ctf]); // Recalculate only when ctf changes
 
     return (
         <Dialog open={isOpen} onOpenChange={onClose}>
@@ -144,7 +139,7 @@ const ProgramInfoModal: React.FC<ProgramInfoModalProps> = ({ isOpen, onClose, pr
                 <Tabs defaultValue="structure" className="flex-grow flex flex-col min-h-0"> {/* Ensure tabs content can shrink/grow */}
                     <TabsList className="mb-2 shrink-0">
                         <TabsTrigger value="structure">Structure</TabsTrigger>
-                        <TabsTrigger value="ctf">CTF Tables</TabsTrigger>
+                        <TabsTrigger value="ctf">CTF Table</TabsTrigger> {/* Renamed trigger */}
                     </TabsList>
 
                     {/* Structure Tab */}
@@ -154,12 +149,36 @@ const ProgramInfoModal: React.FC<ProgramInfoModalProps> = ({ isOpen, onClose, pr
                         </ScrollArea>
                     </TabsContent>
 
-                    {/* CTF Tables Tab */}
+                    {/* Consolidated CTF Table Tab */}
                     <TabsContent value="ctf" className="flex-grow overflow-hidden min-h-0">
                         <ScrollArea className="h-full p-1 pr-4 border border-border rounded-md">
-                            {renderCtfTable(ctf.next, 'Next Instruction')}
-                            {renderCtfTable(ctf.true, 'True Branch')}
-                            {renderCtfTable(ctf.false, 'False Branch')}
+                            {consolidatedCtfData.length === 0 ? (
+                                <p className="text-sm text-muted-foreground italic text-center py-4">
+                                    No control transfers defined.
+                                </p>
+                            ) : (
+                                <Table className="text-xs">
+                                    <TableHeader>
+                                        <TableRow>
+                                            <TableHead className="w-[80px]">Location</TableHead>
+                                            <TableHead className="w-[100px]">next</TableHead>
+                                            <TableHead className="w-[100px]">true</TableHead>
+                                            <TableHead className="w-[100px]">false</TableHead>
+                                        </TableRow>
+                                    </TableHeader>
+                                    <TableBody>
+                                        {consolidatedCtfData.map((row) => (
+                                            <TableRow key={`ctf-row-${row.source}`}>
+                                                <TableCell className="font-mono py-1">{row.source}</TableCell>
+                                                {/* Use '-' as placeholder for missing entries */}
+                                                <TableCell className="font-mono py-1">{row.next ?? '-'}</TableCell>
+                                                <TableCell className="font-mono py-1">{row.true ?? '-'}</TableCell>
+                                                <TableCell className="font-mono py-1">{row.false ?? '-'}</TableCell>
+                                            </TableRow>
+                                        ))}
+                                    </TableBody>
+                                </Table>
+                            )}
                         </ScrollArea>
                     </TabsContent>
                 </Tabs>
