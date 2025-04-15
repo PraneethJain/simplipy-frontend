@@ -17,22 +17,6 @@ import dagre from 'dagre';
 import type { CtfTable } from '@/types/program'; // Adjust path as needed
 import type { LastTransitionInfo } from '@/types/state';
 
-// --- Color Definitions for Dark Mode Visibility ---
-const colors = {
-    nodeBg: 'hsl(240 10% 3.9%)',
-    nodeText: 'hsl(0 0% 98%)',
-    nodeBorder: 'hsl(210 40% 70%)',
-    nodeBorderSelected: 'hsl(210 40% 98%)', // For custom node selection
-
-    edgeNext: 'hsl(240 5% 65%)',
-    edgeTrue: 'hsl(140 60% 60%)',
-    edgeFalse: 'hsl(0 70% 65%)',
-    edgeSelected: 'hsl(45 100% 70%)', // Used in onEdgesChangeIntercept
-
-    labelBg: 'hsl(240 5% 15%)',
-    labelText: 'hsl(0 0% 98%)',
-};
-
 const dagreGraph = new dagre.graphlib.Graph();
 dagreGraph.setDefaultEdgeLabel(() => ({}));
 
@@ -84,15 +68,27 @@ const getLayoutedElements = (
 interface ProgramFlowGraphProps {
     ctf: CtfTable;
     highlightedEdgeInfo: LastTransitionInfo | null;
+    theme: 'light' | 'dark';
 }
 
 // --- Main Component ---
-const ProgramFlowGraph: React.FC<ProgramFlowGraphProps> = ({ ctf, highlightedEdgeInfo }) => {
+const ProgramFlowGraph: React.FC<ProgramFlowGraphProps> = ({ ctf, highlightedEdgeInfo, theme }) => {
     const [nodes, setNodes, onNodesChange] = useNodesState([]);
     const [edges, setEdges] = useEdgesState([]);
     const { fitView, getNode } = useReactFlow();
 
-    // console.log(highlightedEdgeInfo)
+    const nodeBg = theme === 'dark' ? 'hsl(240 10% 3.9%)' : 'hsl(0 0% 100%)';
+    const nodeText = theme === 'dark' ? 'hsl(0 0% 98%)' : 'hsl(0 0% 0%)';
+    const nodeBorder = theme === 'dark' ? 'hsl(210 40% 70%)' : 'hsl(210 40% 30%)';
+
+    const labelText = theme === 'dark' ? 'hsl(0 0% 98%)' : 'hsl(0 0% 0%)';
+    const labelBg = theme === 'dark' ? 'hsl(240 5% 15%)' : 'hsl(0 0% 90%)';
+
+    const edgeNext = 'hsl(240 5% 65%)';
+    const edgeTrue = 'hsl(140 60% 60%)';
+    const edgeFalse = 'hsl(0 70% 65%)';
+    const edgeSelected = 'hsl(45 100% 70%)';
+
 
     // Get unique line numbers involved in CTF
     const allLineNumbers = useMemo(() => {
@@ -117,9 +113,9 @@ const ProgramFlowGraph: React.FC<ProgramFlowGraphProps> = ({ ctf, highlightedEdg
             style: {
                 fontSize: '10px',
                 fontFamily: 'monospace',
-                background: colors.nodeBg,
-                color: colors.nodeText,
-                border: `1px solid ${colors.nodeBorder}`,
+                background: nodeBg,
+                color: nodeText,
+                border: `1px solid ${nodeBorder}`,
                 borderRadius: '4px',
                 width: `${NODE_WIDTH}px`, // Set fixed width/height from constants
                 height: `${NODE_HEIGHT}px`,
@@ -135,10 +131,10 @@ const ProgramFlowGraph: React.FC<ProgramFlowGraphProps> = ({ ctf, highlightedEdg
 
         const addEdgeIfValid = (source: string, target: string, label: string, type: 'next' | 'true' | 'false') => {
             if (nodeIds.has(source) && nodeIds.has(target)) {
-                const edgeColor = type === 'next' ? colors.edgeNext :
-                    type === 'true' ? colors.edgeTrue :
-                        colors.edgeFalse;
-                const arrowColor = type === 'next' ? colors.edgeNext : edgeColor; // Use edge color for T/F arrows
+                const edgeColor = type === 'next' ? edgeNext :
+                    type === 'true' ? edgeTrue :
+                        edgeFalse;
+                const arrowColor = type === 'next' ? edgeNext : edgeColor; // Use edge color for T/F arrows
 
                 generatedEdges.push({
                     id: `e-${source}-${target}-${label.toLowerCase()}`,
@@ -148,9 +144,9 @@ const ProgramFlowGraph: React.FC<ProgramFlowGraphProps> = ({ ctf, highlightedEdg
                     type: 'smoothstep',
                     markerEnd: { type: MarkerType.ArrowClosed, width: 15, height: 15, color: arrowColor },
                     style: { stroke: edgeColor, strokeWidth: 1.5 },
-                    labelStyle: { fontSize: '10px', fill: colors.labelText, fontWeight: '500' },
+                    labelStyle: { fontSize: '10px', fill: labelText, fontWeight: '500' },
                     // labelBgEnabled: true,
-                    labelBgStyle: { fill: colors.labelBg, fillOpacity: 0.85, stroke: colors.nodeBorder, strokeWidth: 0.5 },
+                    labelBgStyle: { fill: labelBg, fillOpacity: 0.85, stroke: nodeBorder, strokeWidth: 0.5 },
                     labelBgPadding: [4, 2],
                     labelBgBorderRadius: 2,
                 });
@@ -179,7 +175,7 @@ const ProgramFlowGraph: React.FC<ProgramFlowGraphProps> = ({ ctf, highlightedEdg
             fitView({ padding: 0.15, duration: 300 }); // Slightly smaller padding might be ok
         });
 
-    }, [ctf, allLineNumbers, setNodes, setEdges, fitView]); // Dependencies
+    }, [ctf, allLineNumbers, setNodes, setEdges, fitView, nodeBg, nodeText, nodeBorder, labelText, labelBg]); // Dependencies
 
     useEffect(() => {
         setEdges((prevEdges) =>
@@ -196,26 +192,22 @@ const ProgramFlowGraph: React.FC<ProgramFlowGraphProps> = ({ ctf, highlightedEdg
                 }
 
                 // Determine base color based on type stored in data
-                const baseColor = edge.label === 'next' ? colors.edgeNext :
-                    edge.label === 'T' ? colors.edgeTrue :
-                        colors.edgeFalse;
+                const baseColor = edge.label === 'next' ? edgeNext :
+                    edge.label === 'T' ? edgeTrue :
+                        edgeFalse;
 
                 return {
                     ...edge,
                     style: {
                         ...edge.style,
-                        stroke: shouldHighlight ? colors.edgeSelected : baseColor, // Highlight or base color
-                        strokeWidth: shouldHighlight ? 2.5 : 1.5, // Thicker when highlighted
+                        stroke: shouldHighlight ? edgeSelected : baseColor,
+                        strokeWidth: shouldHighlight ? 2.5 : 1.5,
                     },
                     markerEnd: {
                         type: MarkerType.ArrowClosed,
-                        color: shouldHighlight ? colors.edgeSelected : baseColor,
+                        color: shouldHighlight ? edgeSelected : baseColor,
                     },
-                    // markerEnd: {
-                    //     ...edge.markerEnd,
-                    //     color: shouldHighlight ? colors.edgeHighlight : baseColor, // Match arrow color
-                    // },
-                    animated: shouldHighlight, // Add animation when highlighted
+                    animated: shouldHighlight,
                 };
             })
         );

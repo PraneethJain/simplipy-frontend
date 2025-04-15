@@ -5,6 +5,7 @@ import * as monacoEditor from 'monaco-editor/esm/vs/editor/editor.api';
 interface CodeEditorProps {
     code: string;
     onChange: (value: string | undefined) => void;
+    theme: 'light' | 'dark';
     language?: string;
     readOnly?: boolean;
     currentLine?: number;
@@ -16,6 +17,7 @@ const CURRENT_LINE_DECORATION_CLASS = 'current-line-highlight';
 const CodeEditor: React.FC<CodeEditorProps> = ({
     code,
     onChange,
+    theme,
     language = "python",
     readOnly = false,
     currentLine
@@ -72,7 +74,14 @@ const CodeEditor: React.FC<CodeEditorProps> = ({
         editorRef.current = editor;
         monacoRef.current = monaco;
         // Initial highlight application is handled by the useEffect
+        monaco.editor.setTheme(theme === 'dark' ? 'vs-dark' : 'vs');
     };
+
+    useEffect(() => {
+        if (monacoRef.current && editorRef.current) {
+            monacoRef.current.editor.setTheme(theme === 'dark' ? 'vs-dark' : 'vs');
+        }
+    }, [theme]);
 
     return (
         // Use border-border from theme, remove shadow

@@ -14,7 +14,7 @@ import type { SerializedProgram, CtfTable } from '@/types/program';
 // Shadcn UI Components & Icons
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { X, Info, PanelLeftClose, PanelRightClose, Wand2, Github } from 'lucide-react'; // Added Github icon
+import { X, Info, PanelLeftClose, PanelRightClose, Wand2, Github, Sun, Moon } from 'lucide-react'; // Added Github icon
 
 // Default sample code
 const defaultCode = `
@@ -79,6 +79,21 @@ function App() {
 
   // --- UI State ---
   const [showCfg, setShowCfg] = useState<boolean>(false); // Toggle CFG visibility
+  const [isDarkMode, setIsDarkMode] = useState(() => {
+    const savedTheme = localStorage.getItem('theme');
+    if (savedTheme === 'dark') return true;
+    if (savedTheme === 'light') return false;
+    return window.matchMedia('(prefers-color-scheme: dark)').matches;
+  });
+
+  useEffect(() => {
+    if (isDarkMode) {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+    localStorage.setItem('theme', isDarkMode ? 'dark' : 'light');
+  }, [isDarkMode]);
 
   // --- Derived State ---
   const currentDisplayData = stateHistory[currentStateIndex] ?? null;
@@ -243,6 +258,16 @@ function App() {
           <Info className="h-4 w-4" />
         </Button>
 
+        <Button
+          onClick={() => setIsDarkMode(prev => !prev)}
+          variant="outline"
+          size="sm"
+          aria-label={isDarkMode ? "Switch to Light Mode" : "Switch to Dark Mode"}
+          title={isDarkMode ? "Switch to Light Mode" : "Switch to Dark Mode"}
+        >
+          {isDarkMode ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+        </Button>
+
         {/* Status indicators */}
         <div className='flex items-center gap-4 text-xs text-muted-foreground shrink-0'>
           {sessionId && isSessionActive && (<span>S: {sessionId.substring(0, 6)}.. (Step {currentStateIndex + 1}/{stateHistory.length})</span>)}
@@ -271,6 +296,7 @@ function App() {
             <CodeEditor
               code={code}
               onChange={(value) => setCode(value || '')}
+              theme={isDarkMode ? 'dark' : 'light'}
               readOnly={isSessionActive || isLoading}
               currentLine={isSessionActive ? currentLine : undefined}
             />
@@ -316,6 +342,7 @@ function App() {
                 <ProgramFlowGraph
                   ctf={ctfTable}
                   highlightedEdgeInfo={currentTransition}
+                  theme={isDarkMode ? 'dark' : 'light'}
                 />
               </ReactFlowProvider>
             </div>
