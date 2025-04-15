@@ -3,6 +3,7 @@ import { CtfTable, SerializedProgram } from "@/types/program";
 export interface ClosureRepresentation {
   lineno: number;
   formals: string[];
+  par_env_id: number;
 }
 
 export type EnvironmentValue =

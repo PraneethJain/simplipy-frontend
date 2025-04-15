@@ -9,9 +9,9 @@ interface EnvironmentNodeData {
 
 const formatValue = (value: EnvironmentValue): string => {
     if (value === "💀") { return "💀"; }
-    if (typeof value === 'object' && value !== null && 'lineno' in value && 'formals' in value) {
+    if (typeof value === 'object' && value !== null && 'lineno' in value && 'formals' in value && 'par_env_id' in value) {
         const formalsString = Array.isArray(value.formals) ? value.formals.join(', ') : 'unknown';
-        return `ƒ(L${value.lineno}, Formals:[${formalsString}])`;
+        return `ƒ(L${value.lineno}, [${formalsString}], env:${value.par_env_id})`;
     }
     try {
         return JSON.stringify(value, null, 2);
