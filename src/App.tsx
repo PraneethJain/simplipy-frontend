@@ -18,22 +18,11 @@ import { X, Info, PanelLeftClose, PanelRightClose, Wand2, Github, Sun, Moon } fr
 
 // Default sample code
 const defaultCode = `
-def my_func(a):
-    return a * 2
+def add(x, y):
+    return x + y
 
-y = 10 + (5 * my_func(2))
+z = add(3, 4)
 
-x = 1
-if x > 0:
-    y = 10
-
-while x < 3:
-    x = x + 1
-
-def simple_add(a, b):
-    c = a + b
-
-z = simple_add(5, 3)
 `;
 
 // Utility function to extract error messages
