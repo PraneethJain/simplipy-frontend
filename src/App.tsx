@@ -14,7 +14,7 @@ import type { SerializedProgram, CtfTable } from '@/types/program';
 // Shadcn UI Components & Icons
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { X, Info, PanelLeftClose, PanelRightClose, Wand2, Github, Sun, Moon } from 'lucide-react'; // Added Github icon
+import { X, Info, PanelLeftClose, PanelRightClose, Wand2, Sun, Moon, Maximize } from 'lucide-react';
 
 // Default sample code
 const defaultCode = `
@@ -68,6 +68,7 @@ function App() {
 
   // --- UI State ---
   const [showCfg, setShowCfg] = useState<boolean>(false); // Toggle CFG visibility
+  const [graphFullscreen, setGraphFullscreen] = useState<boolean>(false); // Fullscreen toggle for Env Graph
   const [isDarkMode, setIsDarkMode] = useState(() => {
     const savedTheme = localStorage.getItem('theme');
     if (savedTheme === 'dark') return true;
@@ -295,8 +296,18 @@ function App() {
         {/* --- Panel 2: State View (Env + Stack) --- */}
         <div className={`h-full flex flex-col gap-4 overflow-hidden transition-all duration-300 ${showCfg ? 'w-1/3' : 'w-2/3'}`}>
           {/* Environment Graph */}
-          <div className={`flex flex-col overflow-hidden flex-1`}>
-            <p className="text-xs text-muted-foreground mb-1 shrink-0">Environment Graph</p>
+          <div className={`flex flex-col overflow-hidden flex-1 ${graphFullscreen ? 'absolute top-0 left-0 w-full h-full z-50 bg-background p-4' : ''}`}>
+            <div className="flex items-center justify-between mb-1">
+              <p className="text-xs text-muted-foreground mb-1 shrink-0">Environment Graph</p>
+              <button
+                title='Fullscreen'
+                className='text-muted-foreground hover:text-foreground transition-colors'
+                onClick={() => setGraphFullscreen(prev => !prev)}
+              >
+                <Maximize className="h-4 w-4" />
+                <span className="sr-only">Fullscreen</span>
+              </button>
+            </div>
             <div className="flex-grow min-h-0 border border-border rounded-md bg-card">
               {currentProgramState ? (
                 // Wrap EnvironmentGraph in its OWN Provider
@@ -353,7 +364,7 @@ function App() {
           rel="noopener noreferrer"
           className="inline-flex items-center hover:text-foreground transition-colors relative top-[2px]"
         >
-          <Github className="h-3 w-3 mr-1" />
+          <img className="h-3 w-3 mr-1" src="https://simpleicons.org/icons/github.svg" alt="GitHub" />
           GitHub
         </a>
       </footer>
