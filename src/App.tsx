@@ -14,7 +14,7 @@ import type { SerializedProgram, CtfTable } from '@/types/program';
 // Shadcn UI Components & Icons
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { X, Info, PanelLeftClose, PanelRightClose, Wand2, Github, Sun, Moon, Maximize } from 'lucide-react';
+import { X, Info, PanelLeftClose, PanelRightClose, Wand2, Sun, Moon, Maximize } from 'lucide-react';
 
 // Default sample code
 const defaultCode = `
@@ -364,7 +364,7 @@ function App() {
           rel="noopener noreferrer"
           className="inline-flex items-center hover:text-foreground transition-colors relative top-[2px]"
         >
-          <Github className="h-3 w-3 mr-1" />
+          <img className="h-3 w-3 mr-1" src="https://simpleicons.org/icons/github.svg" alt="GitHub" />
           GitHub
         </a>
       </footer>
